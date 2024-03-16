@@ -1,7 +1,9 @@
 package middleware
 
 import (
+	"encoding/hex"
 	"log/slog"
+	"math/rand"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -9,16 +11,20 @@ import (
 
 func DefaultStructuredLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		start := time.Now() // Start timer
+		logCorrelationID, _ := randomHex(10)
+		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
+
+		c.Set("logCorrelationID", logCorrelationID)
 
 		c.Next()
 
 		param := gin.LogFormatterParams{}
 
-		param.TimeStamp = time.Now() // Stop timer
+		param.TimeStamp = time.Now()
 		param.Latency = param.TimeStamp.Sub(start)
+
 		if param.Latency > time.Minute {
 			param.Latency = param.Latency.Truncate(time.Second)
 		}
@@ -28,12 +34,13 @@ func DefaultStructuredLogger() gin.HandlerFunc {
 		param.StatusCode = c.Writer.Status()
 		param.ErrorMessage = c.Errors.ByType(gin.ErrorTypePrivate).String()
 		param.BodySize = c.Writer.Size()
+
 		if raw != "" {
 			path = path + "?" + raw
 		}
+
 		param.Path = path
 
-		// Log using the params
 		if c.Writer.Status() >= 500 {
 			slog.Error(
 				param.ErrorMessage,
@@ -43,6 +50,7 @@ func DefaultStructuredLogger() gin.HandlerFunc {
 				"body_size", param.BodySize,
 				"path", param.Path,
 				"latency", param.Latency.String(),
+				"correlation_id", logCorrelationID,
 			)
 		} else {
 			slog.Info(
@@ -53,7 +61,16 @@ func DefaultStructuredLogger() gin.HandlerFunc {
 				"body_size", param.BodySize,
 				"path", param.Path,
 				"latency", param.Latency.String(),
+				"correlation_id", logCorrelationID,
 			)
 		}
 	}
+}
+
+func randomHex(n int) (string, error) {
+	bytes := make([]byte, n)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(bytes), nil
 }
