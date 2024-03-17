@@ -1,9 +1,8 @@
 package middleware
 
 import (
-	"encoding/hex"
+	"ab-metrics/pkg/random"
 	"log/slog"
-	"math/rand"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -11,7 +10,7 @@ import (
 
 func DefaultStructuredLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logCorrelationID, _ := randomHex(10)
+		logCorrelationID := random.Hex(10)
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
@@ -65,12 +64,4 @@ func DefaultStructuredLogger() gin.HandlerFunc {
 			)
 		}
 	}
-}
-
-func randomHex(n int) (string, error) {
-	bytes := make([]byte, n)
-	if _, err := rand.Read(bytes); err != nil {
-		return "", err
-	}
-	return hex.EncodeToString(bytes), nil
 }

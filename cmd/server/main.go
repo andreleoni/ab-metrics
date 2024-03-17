@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"os"
 
+	"ab-metrics/internal/domain/service"
+	"ab-metrics/internal/infrastructure/persistence"
 	"ab-metrics/internal/usecase"
 	"ab-metrics/pkg/middleware"
 
@@ -26,19 +28,23 @@ func main() {
 	r.Use(middleware.DefaultStructuredLogger()) // adds our new middleware
 	r.Use(gin.Recovery())                       // adds the default recovery middleware
 
+	experimentRepositoryImpl := persistence.NewExperimentRepository()
+	actorRepositoryImpl := persistence.NewActorRepository()
+	scenarioEligibilityServiceImpl := service.NewScenarioEligibilityService()
+
 	v1 := r.Group("/api/v1")
 	// POST /api/v1/experiment/:scenario
 	//   request: { "device_uuid": "test" }
 	//   response: { "id": "test", "scenario": "" }
 	//
 	//   gerar um token baseado no uuid, pegar a porcentagem ativa e escolher o cenário para o usuário
-	v1.POST("/experiment/:scenario", func(c *gin.Context) {
+	v1.POST("/experiment/:experiment", func(c *gin.Context) {
 		logCorrelationID, logCorrelationIDExists := c.Get("logCorrelationID")
 
-		scenario, scenarioExists := c.Params.Get("scenario")
-		if !scenarioExists {
+		experiment, experimentExists := c.Params.Get("experiment")
+		if !experimentExists {
 			c.JSON(http.StatusNotFound, gin.H{
-				"error": "scenario not found",
+				"error": "experiment not found",
 			})
 
 			return
@@ -66,15 +72,22 @@ func main() {
 
 		contextlogger = logger.With("identifier", identifier)
 
-		geiuci := usecase.ScenarioEligibilityCheckInput{Identifier: identifier, Scenario: scenario}
+		geiuci := usecase.ScenarioEligibilityCheckInput{
+			Identifier: identifier,
+			Experiment: experiment}
 
-		getExperimentUserCase := usecase.NewScenarioEligibilityCheckUseCase(contextlogger)
+		getExperimentUserCase := usecase.NewScenarioEligibilityCheckUseCase(
+			contextlogger,
+			experimentRepositoryImpl,
+			actorRepositoryImpl,
+			scenarioEligibilityServiceImpl)
+
 		output, err := getExperimentUserCase.Execute(geiuci)
 
 		if err != nil {
 			contextlogger.Error(err.Error(),
 				"identifier", identifier,
-				"scenario", scenario,
+				"experiment", experiment,
 			)
 
 			c.JSON(http.StatusUnprocessableEntity, gin.H{
@@ -93,7 +106,9 @@ func main() {
 	v1.POST("/experiment/goal/:goal", func(c *gin.Context) {
 		contextlogger := logger
 
-		contextlogger.Info("OIEEEEE")
+		createActorGoalCheckUseCase := usecase.NewCreateActorGoalCheckUseCase(contextlogger)
+
+		createActorGoalCheckUseCase.Execute(usecase.CreateActorGoalCheckInput{})
 
 		c.JSON(http.StatusOK, gin.H{
 			"message": "qwopkeqpwe",
