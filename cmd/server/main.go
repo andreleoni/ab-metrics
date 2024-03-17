@@ -30,6 +30,7 @@ func main() {
 
 	experimentRepositoryImpl := persistence.NewExperimentRepository()
 	actorRepositoryImpl := persistence.NewActorRepository()
+	goalRepositoryImpl := persistence.NewGoalRepository()
 	scenarioEligibilityServiceImpl := service.NewScenarioEligibilityService()
 
 	v1 := r.Group("/api/v1")
@@ -104,26 +105,54 @@ func main() {
 	//
 	//   pegar o experiment ID, e cadastrar o goal para ele caso estiver presente
 	v1.POST("/experiment/goal/:goal", func(c *gin.Context) {
+		logCorrelationID, logCorrelationIDExists := c.Get("logCorrelationID")
+
 		contextlogger := logger
 
-		createActorGoalCheckUseCase := usecase.NewCreateActorGoalCheckUseCase(contextlogger)
+		if logCorrelationIDExists {
+			contextlogger = logger.With("correlation_id", logCorrelationID)
+		}
 
-		createActorGoalCheckUseCase.Execute(usecase.CreateActorGoalCheckInput{})
+		goal, goalExists := c.Params.Get("goal")
+		if !goalExists {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "goal not found",
+			})
+
+			return
+		}
+
+		// Parse body
+		bodyAsByteArray, _ := ioutil.ReadAll(c.Request.Body)
+		jsonMap := make(map[string]string)
+		json.Unmarshal(bodyAsByteArray, &jsonMap)
+
+		identifier := jsonMap["identifier"]
+		if identifier == "" {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "identifier not found",
+			})
+
+			return
+		}
+
+		createActorGoalCheckUseCase := usecase.NewCreateActorGoalCheckUseCase(
+			contextlogger, actorRepositoryImpl, goalRepositoryImpl,
+		)
+
+		recordGoalInput := usecase.CreateActorGoalCheckInput{ActorID: identifier, GoalKey: goal}
+
+		goalOutput, err := createActorGoalCheckUseCase.Execute(recordGoalInput)
+		if err != nil {
+			c.JSON(http.StatusUnprocessableEntity, gin.H{
+				"error": err,
+			})
+
+			return
+		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"message": "qwopkeqpwe",
-		})
-	})
-
-	// GET /api/v1/stats/:scenario
-	//   response: { "groups": { "a": 1, "b": 2 } }
-	v1.POST("/stats/:scenario", func(c *gin.Context) {
-		contextlogger := logger
-
-		contextlogger.Info("OIEEEEE")
-
-		c.JSON(http.StatusOK, gin.H{
-			"message": "kkkk",
+			"message": goalOutput.Status,
 		})
 	})
 

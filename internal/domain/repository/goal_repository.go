@@ -5,6 +5,6 @@ import (
 )
 
 type GoalRepository interface {
-	Get(actorID string, key string) (entity.Goal, bool)
+	Get(actorID string, key string) (entity.Goal, error)
 	Create(entity.Goal) (entity.Goal, error)
 }
