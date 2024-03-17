@@ -4,7 +4,6 @@ import (
 	"ab-metrics/internal/domain/entity"
 	"ab-metrics/internal/domain/repository"
 	"ab-metrics/internal/domain/service"
-	"ab-metrics/pkg/random"
 	"log/slog"
 )
 
@@ -57,20 +56,26 @@ func (geiuc ScenarioEligibilityCheckUseCase) Execute(
 			"retrieve_experiments", experiment,
 			"input", geiuci)
 
-		return ScenarioEligibilityCheckOuput{Variation: "control"}, nil
+		return ScenarioEligibilityCheckOuput{}, nil
 	}
 
 	variationID := sesVariation.Variation.ID
-	actorID := random.Hex(10)
 
-	if sesVariation.Variation.Key != "control" {
-		actor := entity.Actor{
-			ID:          actorID,
-			VariationID: variationID,
-			Identifier:  geiuci.Identifier}
+	actor := entity.Actor{}
+	actor.VariationID = variationID
+	actor.Identifier = geiuci.Identifier
 
-		geiuc.actorRepository.Create(actor)
+	var err error
+
+	actor, err = geiuc.actorRepository.Create(actor)
+	if err != nil {
+		geiuc.logger.Debug(
+			"ScenarioEligibilityCheckOuput#Execute: error on create actor",
+			"retrieve_experiments", experiment,
+			"input", geiuci,
+			"error", err,
+		)
 	}
 
-	return ScenarioEligibilityCheckOuput{Token: actorID, Variation: sesVariation.Variation.Key}, nil
+	return ScenarioEligibilityCheckOuput{Token: actor.ID, Variation: sesVariation.Variation.Key}, nil
 }

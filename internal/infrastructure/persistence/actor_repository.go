@@ -2,7 +2,8 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
-	"log/slog"
+
+	"ab-metrics/pkg/random"
 )
 
 type ActorRepository struct {
@@ -12,10 +13,10 @@ func NewActorRepository() ActorRepository {
 	return ActorRepository{}
 }
 
-func (ActorRepository) Create(a entity.Actor) entity.Actor {
+func (ActorRepository) Create(a entity.Actor) (entity.Actor, error) {
 	// TODO: create actor
 
-	slog.Info("User created!", "actor", a)
+	a.ID = random.Hex(10)
 
-	return a
+	return a, nil
 }
