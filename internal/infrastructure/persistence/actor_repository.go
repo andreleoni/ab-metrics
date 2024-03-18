@@ -4,19 +4,22 @@ import (
 	"ab-metrics/internal/domain/entity"
 
 	"ab-metrics/pkg/random"
+
+	"gorm.io/gorm"
 )
 
 type ActorRepository struct {
+	sqlite *gorm.DB
 }
 
-func NewActorRepository() ActorRepository {
-	return ActorRepository{}
+func NewActorRepository(sqlite *gorm.DB) ActorRepository {
+	return ActorRepository{sqlite: sqlite}
 }
 
-func (ActorRepository) Create(a entity.Actor) (entity.Actor, error) {
-	// TODO: create actor
-
+func (ar ActorRepository) Create(a *entity.Actor) error {
 	a.ID = random.Hex(10)
 
-	return a, nil
+	result := ar.sqlite.Create(&a)
+
+	return result.Error
 }

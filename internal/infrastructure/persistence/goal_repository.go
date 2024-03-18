@@ -2,32 +2,32 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
-	"fmt"
 
 	"ab-metrics/pkg/random"
+
+	"gorm.io/gorm"
 )
 
 type GoalRepository struct {
+	sqlite *gorm.DB
 }
 
-func NewGoalRepository() GoalRepository {
-	return GoalRepository{}
+func NewGoalRepository(sqlite *gorm.DB) GoalRepository {
+	return GoalRepository{sqlite: sqlite}
 }
 
-func (GoalRepository) Get(actorID string, key string) (entity.Goal, error) {
-	// TODO: create Goal
+func (gr GoalRepository) Get(actorID string, key string) (entity.Goal, error) {
+	goal := entity.Goal{ActorID: actorID, Key: key}
 
-	if actorID == "simulatenotfound" {
-		return entity.Goal{}, fmt.Errorf("not found")
-	}
+	result := gr.sqlite.First(&goal)
 
-	return entity.Goal{}, nil
+	return goal, result.Error
 }
 
-func (GoalRepository) Create(g entity.Goal) (entity.Goal, error) {
-	// TODO: create Goal
-
+func (gr GoalRepository) Create(g entity.Goal) error {
 	g.ID = random.Hex(10)
 
-	return g, nil
+	result := gr.sqlite.Create(&g)
+
+	return result.Error
 }

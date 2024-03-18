@@ -2,25 +2,16 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
+
+	"gorm.io/gorm"
 )
 
-type variation struct {
-	percentage int
-	key        string
+type ExperimentRepository struct {
+	sqlite *gorm.DB
 }
 
-var experiments = map[string][]variation{
-	"new_checkout_button": {
-		{80, "control"},
-		{20, "a"},
-		{20, "b"},
-	},
-}
-
-type ExperimentRepository struct{}
-
-func NewExperimentRepository() ExperimentRepository {
-	return ExperimentRepository{}
+func NewExperimentRepository(sqlite *gorm.DB) ExperimentRepository {
+	return ExperimentRepository{sqlite: sqlite}
 }
 
 func (ExperimentRepository) GetByKey(key string) entity.Experiment {

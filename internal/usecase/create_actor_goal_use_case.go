@@ -48,7 +48,7 @@ func (cagcuc CreateActorGoalCheckUseCase) Execute(
 
 	goal := entity.Goal{ActorID: cagcuci.ActorID, Key: cagcuci.GoalKey}
 
-	goal, err = cagcuc.goalRepository.Create(goal)
+	err = cagcuc.goalRepository.Create(goal)
 	if err != nil {
 		cagcuc.logger.Error("error on creating goal",
 			"goal", goal,

@@ -8,6 +8,7 @@ import (
 	"os"
 
 	"ab-metrics/internal/domain/service"
+	"ab-metrics/internal/infrastructure/database/sqlite"
 	"ab-metrics/internal/infrastructure/persistence"
 	"ab-metrics/internal/usecase"
 	"ab-metrics/pkg/middleware"
@@ -16,6 +17,8 @@ import (
 )
 
 func main() {
+	sqlite.SQLiteSetup()
+
 	// TODO: add log level here
 	handler := slog.NewJSONHandler(os.Stdout, nil)
 
@@ -28,9 +31,10 @@ func main() {
 	r.Use(middleware.DefaultStructuredLogger()) // adds our new middleware
 	r.Use(gin.Recovery())                       // adds the default recovery middleware
 
-	experimentRepositoryImpl := persistence.NewExperimentRepository()
-	actorRepositoryImpl := persistence.NewActorRepository()
-	goalRepositoryImpl := persistence.NewGoalRepository()
+	experimentRepositoryImpl := persistence.NewExperimentRepository(sqlite.Sqlite)
+	actorRepositoryImpl := persistence.NewActorRepository(sqlite.Sqlite)
+	goalRepositoryImpl := persistence.NewGoalRepository(sqlite.Sqlite)
+
 	scenarioEligibilityServiceImpl := service.NewScenarioEligibilityService()
 
 	v1 := r.Group("/api/v1")

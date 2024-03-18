@@ -65,9 +65,7 @@ func (geiuc ScenarioEligibilityCheckUseCase) Execute(
 	actor.VariationID = variationID
 	actor.Identifier = geiuci.Identifier
 
-	var err error
-
-	actor, err = geiuc.actorRepository.Create(actor)
+	err := geiuc.actorRepository.Create(&actor)
 	if err != nil {
 		geiuc.logger.Debug(
 			"ScenarioEligibilityCheckOuput#Execute: error on create actor",
