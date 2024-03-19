@@ -29,16 +29,15 @@ func main() {
 		logLevel = slog.LevelError
 	}
 
-	sqlite.SQLiteSetup()
-
 	opts := &slog.HandlerOptions{Level: logLevel}
 
-	// TODO: add log level here
 	handler := slog.NewJSONHandler(os.Stdout, opts)
 
 	logger := slog.New(handler)
 
 	slog.SetDefault(logger)
+
+	sqlite.SQLiteSetup()
 
 	r := gin.New() // empty engine
 
