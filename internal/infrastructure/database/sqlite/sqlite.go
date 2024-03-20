@@ -67,8 +67,9 @@ func actorMigration() {
 
 		"CREATE TABLE IF NOT EXISTS actors (" +
 		"id text," +
-		"variation_id text" +
-		"identifier text" +
+		"variation_id text," +
+		"identifier text," +
+		"created_at text" +
 		");"
 
 	fmt.Println("Running actor seed...")
@@ -103,7 +104,8 @@ func goalMigration() {
 		"CREATE TABLE IF NOT EXISTS goals (" +
 		"id text," +
 		"actor_id text," +
-		"key text" +
+		"key text," +
+		"created_at text" +
 		");"
 
 	fmt.Println("Running product seed...")

@@ -5,4 +5,5 @@ type Variation struct {
 	ExperimentID string
 	Key          string
 	Percentage   int
+	CreatedAt    string
 }

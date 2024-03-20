@@ -1,10 +1,11 @@
 package entity
 
 type Experiment struct {
-	ID     string
-	Name   string
-	Key    string
-	Status string
+	ID        string
+	Name      string
+	Key       string
+	Status    string
+	CreatedAt string
 
 	// Relations
 	Variations []Variation // Has many

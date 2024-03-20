@@ -33,8 +33,8 @@ func (cagcuc CreateActorGoalCheckUseCase) Execute(
 	cagcuci CreateActorGoalCheckInput) (CreateActorGoalCheckOuput, error) {
 
 	_, err := cagcuc.goalRepository.Get(cagcuci.ActorID, cagcuci.GoalKey)
-	if err != nil && err.Error() == "not found" {
-		cagcuc.logger.Debug("CreateActorGoalCheckUseCase#Execute: not found error",
+	if err != nil && err.Error() != "record not found" {
+		cagcuc.logger.Debug("CreateActorGoalCheckUseCase#Execute: goal already found",
 			"actor_id", cagcuci.ActorID,
 			"goal_key", cagcuci.GoalKey)
 

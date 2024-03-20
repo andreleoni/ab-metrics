@@ -2,6 +2,7 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
+	"time"
 
 	"ab-metrics/pkg/random"
 
@@ -18,6 +19,7 @@ func NewActorRepository(sqlite *gorm.DB) ActorRepository {
 
 func (ar ActorRepository) Create(a *entity.Actor) error {
 	a.ID = random.Hex(10)
+	a.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 
 	result := ar.sqlite.Create(&a)
 
