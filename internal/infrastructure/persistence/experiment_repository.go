@@ -3,15 +3,15 @@ package persistence
 import (
 	"ab-metrics/internal/domain/entity"
 
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ExperimentRepository struct {
-	sqlite *gorm.DB
+	db *mongo.Client
 }
 
-func NewExperimentRepository(sqlite *gorm.DB) ExperimentRepository {
-	return ExperimentRepository{sqlite: sqlite}
+func NewExperimentRepository(db *mongo.Client) ExperimentRepository {
+	return ExperimentRepository{db: db}
 }
 
 func (ExperimentRepository) GetByKey(key string) entity.Experiment {

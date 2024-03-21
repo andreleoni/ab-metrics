@@ -7,5 +7,5 @@ type Actor struct {
 	CreatedAt   string
 
 	// Relations
-	Variation Variation // Belongs to
+	// Variation Variation // Belongs to
 }

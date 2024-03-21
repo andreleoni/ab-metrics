@@ -2,26 +2,40 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
+	"context"
+	"log/slog"
 	"time"
 
 	"ab-metrics/pkg/random"
 
-	"gorm.io/gorm"
+	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ActorRepository struct {
-	sqlite *gorm.DB
+	db *mongo.Client
 }
 
-func NewActorRepository(sqlite *gorm.DB) ActorRepository {
-	return ActorRepository{sqlite: sqlite}
+func NewActorRepository(db *mongo.Client) ActorRepository {
+	return ActorRepository{db: db}
 }
 
 func (ar ActorRepository) Create(a *entity.Actor) error {
 	a.ID = random.Hex(10)
 	a.CreatedAt = time.Now().UTC().Format(time.RFC3339)
 
-	result := ar.sqlite.Create(&a)
+	// Access the collection
+	collection := ar.db.Database("abmetrics").Collection("actors")
 
-	return result.Error
+	// Insert the item into the collection
+	insertResult, err := collection.InsertOne(context.Background(), a)
+	if err != nil {
+		slog.Error("Error on retrieve mongodb result", "error", err)
+	}
+
+	slog.Debug("ActorRepositoryPersistence#Create",
+		"insertResult", insertResult,
+		"error", err,
+	)
+
+	return err
 }

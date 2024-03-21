@@ -7,5 +7,5 @@ type Goal struct {
 	CreatedAt string
 
 	// Relations
-	Actor Actor // Belongs to
+	// Actor Actor // Belongs to
 }

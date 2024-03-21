@@ -8,7 +8,7 @@ import (
 	"os"
 
 	"ab-metrics/internal/domain/service"
-	"ab-metrics/internal/infrastructure/database/sqlite"
+	"ab-metrics/internal/infrastructure/database/mongodb"
 	"ab-metrics/internal/infrastructure/persistence"
 	"ab-metrics/internal/usecase"
 	"ab-metrics/pkg/middleware"
@@ -37,16 +37,16 @@ func main() {
 
 	slog.SetDefault(logger)
 
-	sqlite.SQLiteSetup()
+	mongodb.MongoDBSetup()
 
 	r := gin.New() // empty engine
 
 	r.Use(middleware.DefaultStructuredLogger()) // adds our new middleware
 	r.Use(gin.Recovery())                       // adds the default recovery middleware
 
-	experimentRepositoryImpl := persistence.NewExperimentRepository(sqlite.Sqlite)
-	actorRepositoryImpl := persistence.NewActorRepository(sqlite.Sqlite)
-	goalRepositoryImpl := persistence.NewGoalRepository(sqlite.Sqlite)
+	experimentRepositoryImpl := persistence.NewExperimentRepository(mongodb.MongoDB)
+	actorRepositoryImpl := persistence.NewActorRepository(mongodb.MongoDB)
+	goalRepositoryImpl := persistence.NewGoalRepository(mongodb.MongoDB)
 
 	scenarioEligibilityServiceImpl := service.NewScenarioEligibilityService()
 
