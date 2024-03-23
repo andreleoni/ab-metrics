@@ -2,29 +2,64 @@ package persistence
 
 import (
 	"ab-metrics/internal/domain/entity"
+	"ab-metrics/pkg/random"
+	"context"
+	"log/slog"
+	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type ExperimentRepository struct {
-	db *mongo.Client
+	db         *mongo.Client
+	collection *mongo.Collection
 }
 
 func NewExperimentRepository(db *mongo.Client) ExperimentRepository {
-	return ExperimentRepository{db: db}
+	collection := db.Database("abmetrics").Collection("experiments")
+
+	return ExperimentRepository{db: db, collection: collection}
 }
 
-func (ExperimentRepository) GetByKey(key string) entity.Experiment {
-	variationA := entity.Variation{ID: "foovariation", ExperimentID: "apskd", Key: "a", Percentage: 33}
-	variationB := entity.Variation{ID: "barvariation", ExperimentID: "apskd", Key: "b", Percentage: 33}
-	variationC := entity.Variation{ID: "foovariation", ExperimentID: "apskd", Key: "control", Percentage: 34}
+func (er ExperimentRepository) GetByKey(key string) (entity.Experiment, bool, error) {
+	experiment := entity.Experiment{}
 
-	experiment := entity.Experiment{
-		ID:         "fooexperiment",
-		Name:       "first experiment",
-		Key:        "first_experiment",
-		Status:     "active",
-		Variations: []entity.Variation{variationA, variationB, variationC}}
+	filter := bson.M{
+		"key": key,
+	}
 
-	return experiment
+	err := er.collection.FindOne(context.Background(), filter).Decode(&experiment)
+
+	if err != nil && err.Error() == "mongo: no documents in result" {
+		return experiment, false, nil
+	} else if err != nil {
+		slog.Error("Error on retrieve mongodb result", "error", err)
+	}
+
+	slog.Debug("ExperimentRepository#GetByKey",
+		"error", err,
+		"retrieve_goal", experiment)
+
+	return experiment, true, err
+}
+
+func (vr ExperimentRepository) Create(e *entity.Experiment) error {
+	e.ID = random.Hex(10)
+	e.CreatedAt = time.Now().UTC().Format(time.RFC3339)
+
+	// Insert the item into the collection
+	insertResult, err := vr.collection.InsertOne(context.Background(), e)
+	if err != nil {
+		slog.Error("Error on insert mongodb result", "error", err)
+
+		return err
+	}
+
+	slog.Debug("ExperimentRepository#Create",
+		"insertResult", insertResult,
+		"error", err,
+	)
+
+	return nil
 }

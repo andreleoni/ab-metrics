@@ -12,7 +12,8 @@ type ScenarioEligibilityService interface {
 
 type ScenarioEligibilityServiceInput struct {
 	Identifier string
-	Experiment entity.Experiment
+	UniqueKey  string
+	Variations []entity.Variation
 }
 
 type ScenarioEligibilityServiceOutput struct {
@@ -31,11 +32,11 @@ func (scenarioEligibilityService) GetVariation(
 	// Calculate total percentage across all variations in all experiments
 	totalPercentage := 0
 
-	for _, variation := range sesi.Experiment.Variations {
+	for _, variation := range sesi.Variations {
 		totalPercentage += variation.Percentage
 	}
 
-	keyForAbTest := fmt.Sprint(sesi.Identifier, sesi.Experiment.Key)
+	keyForAbTest := fmt.Sprint(sesi.Identifier, sesi.UniqueKey)
 
 	// Generate hash value from the device UUID
 	hash := sha256.New()
@@ -50,7 +51,7 @@ func (scenarioEligibilityService) GetVariation(
 
 	// Assign user to a testing group based on the range and probabilities
 	cumulativeProb := 0
-	for _, variation := range sesi.Experiment.Variations {
+	for _, variation := range sesi.Variations {
 		cumulativeProb += variation.Percentage
 		if hashRange < cumulativeProb {
 			return ScenarioEligibilityServiceOutput{Variation: variation}

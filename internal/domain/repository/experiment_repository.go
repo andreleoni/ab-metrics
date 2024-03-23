@@ -5,5 +5,6 @@ import (
 )
 
 type ExperimentRepository interface {
-	GetByKey(key string) entity.Experiment
+	GetByKey(key string) (entity.Experiment, bool, error)
+	Create(e *entity.Experiment) error
 }

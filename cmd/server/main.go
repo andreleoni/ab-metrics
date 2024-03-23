@@ -10,7 +10,7 @@ import (
 	"ab-metrics/internal/domain/service"
 	"ab-metrics/internal/infrastructure/database/mongodb"
 	"ab-metrics/internal/infrastructure/persistence"
-	"ab-metrics/internal/usecase"
+	userusecase "ab-metrics/internal/usecase/user"
 	"ab-metrics/pkg/middleware"
 
 	"github.com/gin-gonic/gin"
@@ -41,8 +41,8 @@ func main() {
 
 	r := gin.New() // empty engine
 
-	r.Use(middleware.DefaultStructuredLogger()) // adds our new middleware
-	r.Use(gin.Recovery())                       // adds the default recovery middleware
+	r.Use(middleware.DefaultStructuredLogger())
+	r.Use(gin.Recovery())
 
 	experimentRepositoryImpl := persistence.NewExperimentRepository(mongodb.MongoDB)
 	actorRepositoryImpl := persistence.NewActorRepository(mongodb.MongoDB)
@@ -51,6 +51,18 @@ func main() {
 	scenarioEligibilityServiceImpl := service.NewScenarioEligibilityService()
 
 	v1 := r.Group("/api/v1")
+
+	adminRoutes := v1.Group("/admin")
+	adminRoutes.Use(middleware.Authenticator())
+
+	adminRoutes.POST("/experiments", func(c *gin.Context) {
+
+	})
+
+	adminRoutes.POST("/experiments/:experimentId/variations", func(c *gin.Context) {
+
+	})
+
 	// POST /api/v1/experiment/:scenario
 	//   request: { "device_uuid": "test" }
 	//   response: { "id": "test", "scenario": "" }
@@ -82,19 +94,17 @@ func main() {
 			return
 		}
 
-		contextlogger := logger
+		contextlogger := logger.With("identifier", identifier)
 
 		if logCorrelationIDExists {
 			contextlogger = logger.With("correlation_id", logCorrelationID)
 		}
 
-		contextlogger = logger.With("identifier", identifier)
-
-		geiuci := usecase.ScenarioEligibilityCheckInput{
+		geiuci := userusecase.ScenarioEligibilityCheckInput{
 			Identifier: identifier,
 			Experiment: experiment}
 
-		getExperimentUserCase := usecase.NewScenarioEligibilityCheckUseCase(
+		getExperimentUserCase := userusecase.NewScenarioEligibilityCheckUseCase(
 			contextlogger,
 			experimentRepositoryImpl,
 			actorRepositoryImpl,
@@ -153,11 +163,11 @@ func main() {
 			return
 		}
 
-		createActorGoalCheckUseCase := usecase.NewCreateActorGoalCheckUseCase(
+		createActorGoalCheckUseCase := userusecase.NewCreateActorGoalCheckUseCase(
 			contextlogger, actorRepositoryImpl, goalRepositoryImpl,
 		)
 
-		recordGoalInput := usecase.CreateActorGoalCheckInput{ActorID: identifier, GoalKey: goal}
+		recordGoalInput := userusecase.CreateActorGoalCheckInput{ActorID: identifier, GoalKey: goal}
 
 		goalOutput, err := createActorGoalCheckUseCase.Execute(recordGoalInput)
 		if err != nil {

@@ -26,14 +26,12 @@ func NewGoalRepository(db *mongo.Client) GoalRepository {
 func (gr GoalRepository) Get(actorID string, key string) (entity.Goal, bool, error) {
 	goal := entity.Goal{}
 
-	collection := gr.db.Database("abmetrics").Collection("goals")
-
 	filter := bson.M{
 		"actorid": actorID,
 		"key":     key,
 	}
 
-	err := collection.FindOne(context.Background(), filter).Decode(&goal)
+	err := gr.collection.FindOne(context.Background(), filter).Decode(&goal)
 
 	if err != nil && err.Error() == "mongo: no documents in result" {
 		return goal, false, nil
